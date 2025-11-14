@@ -11,7 +11,7 @@ const progressWidth = computed(() => `${props.modelValue}%`);
 <template>
   <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
     <div
-      class="h-full bg-blue-500 transition-all duration-500 ease-out"
+      class="h-full bg-yellow-400 transition-all duration-500 ease-out"
       :style="{ width: progressWidth }"
     ></div>
   </div>

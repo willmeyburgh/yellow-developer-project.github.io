@@ -1,20 +1,26 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useLoanApplicationStore } from '~/stores/loanApplication';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Smartphone, AlertCircle, XCircle } from 'lucide-vue-next'; // Added XCircle for deselect button
 
 const store = useLoanApplicationStore();
 
 const selectedPhoneId = ref<number | null>(store.selected_phone_id);
+const phoneSelectionError = ref('');
 
 watch(selectedPhoneId, (newValue) => {
   store.setSelectedPhone(newValue as number);
+  if (newValue) {
+    phoneSelectionError.value = '';
+  } else {
+    phoneSelectionError.value = 'Please select a phone';
+  }
 });
 
-// Update local ref if store values change (e.g., on form reset)
 watch(() => store.selected_phone_id, (newValue) => {
   selectedPhoneId.value = newValue;
 });
@@ -26,76 +32,104 @@ const isStepValid = computed(() => {
          store.dailyPayment !== null;
 });
 
-// Expose validation status for parent component
 defineExpose({
   isStepValid,
+});
+
+const handlePhoneSelect = (phoneId: number) => {
+  if (selectedPhoneId.value === phoneId) {
+    selectedPhoneId.value = null; // Deselect if already selected
+  } else {
+    selectedPhoneId.value = phoneId; // Select
+  }
+};
+
+const displayedPhones = computed(() => {
+  if (selectedPhoneId.value !== null) {
+    const selected = store.affordablePhones.find(phone => phone.id === selectedPhoneId.value);
+    return selected ? [selected] : [];
+  }
+  return store.affordablePhones;
 });
 </script>
 
 <template>
-  <Card class="w-full max-w-md mx-auto">
-    <CardHeader>
-      <CardTitle>Phone Selection & Dynamic Pricing</CardTitle>
-      <CardDescription>Choose an affordable phone model.</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div v-if="!store.monthly_income || store.monthly_income <= 0" class="text-red-500 mb-4">
+  <div class="space-y-4">
+    <Alert v-if="!store.monthly_income || store.monthly_income <= 0" class="border-yellow-200">
+      <AlertCircle class="h-4 w-4" />
+      <AlertDescription>
         Please provide your monthly income in the previous step to see affordable phones.
-      </div>
-      <div v-else-if="!store.isAgeValid" class="text-red-500 mb-4">
-        Your age must be between 18 and 65 to proceed with phone selection.
-      </div>
-      <div v-else>
-        <h3 class="text-lg font-semibold mb-4">Available Phones (Affordable)</h3>
-        <RadioGroup v-model="selectedPhoneId" class="grid gap-4">
-          <div v-if="store.affordablePhones.length === 0" class="text-gray-500">
-            No phones available based on your affordability.
+      </AlertDescription>
+    </Alert>
+    <Alert v-else-if="!store.isAgeValid" class="border-yellow-200">
+      <AlertCircle class="h-4 w-4" />
+      <AlertDescription>
+        Your age must be between 18 and 65 years old to proceed with phone selection.
+      </AlertDescription>
+    </Alert>
+    <div v-else>
+      <p class="text-sm text-muted-foreground">
+        Select a phone from the available options based on your income
+      </p>
+      <div class="grid gap-4 mt-4">
+        <Alert v-if="store.affordablePhones.length === 0" class="border-yellow-200">
+          <AlertCircle class="h-4 w-4" />
+          <AlertDescription>
+            No phones available within your affordability range. Please review your income details.
+          </AlertDescription>
+        </Alert>
+        <template v-else>
+          <div v-if="selectedPhoneId !== null" class="flex justify-end mb-2">
+            <Button variant="ghost" @click="selectedPhoneId = null" class="text-red-500 hover:bg-red-50">
+              <XCircle class="w-4 h-4 mr-2" /> Show All Phones
+            </Button>
           </div>
-          <div v-for="phone in store.affordablePhones" :key="phone.id" class="flex items-center space-x-2 border p-4 rounded-md">
-            <RadioGroupItem :id="`phone-${phone.id}`" :value="phone.id" />
-            <Label :for="`phone-${phone.id}`" class="flex-1">
-              <div class="flex justify-between items-center">
+          <Card
+            v-for="phone in displayedPhones"
+            :key="phone.id"
+            class="cursor-pointer transition-all hover:shadow-lg"
+            :class="{
+              'border-yellow-300 bg-yellow-50 shadow-md': selectedPhoneId === phone.id,
+              'border-yellow-200 hover:border-yellow-200': selectedPhoneId !== phone.id
+            }"
+            @click="handlePhoneSelect(phone.id)"
+          >
+            <CardContent class="p-4">
+              <div class="flex justify-between items-start mb-3">
                 <div>
-                  <p class="font-medium">{{ phone.model_name }}</p>
-                  <p class="text-sm text-gray-500">Cash Price: R{{ phone.cash_price.toFixed(2) }}</p>
+                  <h3 class="font-semibold text-lg text-yellow-900">{{ phone.model_name }}</h3>
+                  <p class="text-sm text-muted-foreground">
+                    Cash Price: R {{ phone.cash_price.toFixed(2) }}
+                  </p>
                 </div>
-                <div v-if="store.riskProfile" class="text-right">
-                  <p class="text-sm">Deposit: {{ (store.riskProfile.deposit * 100).toFixed(0) }}%</p>
-                  <p class="text-sm">Interest: {{ (store.riskProfile.interest * 100).toFixed(0) }}%</p>
+                <Badge v-if="selectedPhoneId === phone.id" class="bg-yellow-300">Selected</Badge>
+              </div>
+
+              <div v-if="store.applicantAge" class="space-y-2 text-sm">
+                <Separator class="bg-yellow-200" />
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <p class="text-muted-foreground">Daily Payment</p>
+                    <p class="font-semibold text-yellow-300">
+                      R {{ store.getPhoneLoanDetails(phone)?.dailyPayment?.toFixed(2) || 'N/A' }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-muted-foreground">Monthly Price</p>
+                    <p class="font-semibold">
+                      R {{ store.getPhoneLoanDetails(phone)?.monthlyPrice?.toFixed(2) || 'N/A' }}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </Label>
-          </div>
-        </RadioGroup>
-
-        <div v-if="store.selectedPhone" class="mt-8 p-4 border rounded-md bg-gray-50">
-          <h3 class="text-lg font-semibold mb-4">Selected Phone Details</h3>
-          <div class="grid gap-2">
-            <div class="flex justify-between">
-              <span class="font-medium">Model:</span>
-              <span>{{ store.selectedPhone.model_name }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="font-medium">Risk Group:</span>
-              <span>Age {{ store.applicantAge }} (Deposit: {{ (store.riskProfile?.deposit * 100).toFixed(0) }}%, Interest: {{ (store.riskProfile?.interest * 100).toFixed(0) }}%)</span>
-            </div>
-            <Separator />
-            <div class="flex justify-between">
-              <span class="font-medium">Loan Principal:</span>
-              <span>R{{ store.loanPrincipal?.toFixed(2) }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="font-medium">Total Loan Amount:</span>
-              <span>R{{ store.totalLoanAmount?.toFixed(2) }}</span>
-            </div>
-            <Separator />
-            <div class="flex justify-between text-lg font-bold">
-              <span>Daily Payment:</span>
-              <span>R{{ store.dailyPayment?.toFixed(2) }}</span>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        </template>
       </div>
-    </CardContent>
-  </Card>
+    </div>
+    <Alert v-if="phoneSelectionError" variant="destructive" class="py-2">
+      <AlertCircle class="h-4 w-4" />
+      <AlertDescription>{{ phoneSelectionError }}</AlertDescription>
+    </Alert>
+  </div>
 </template>

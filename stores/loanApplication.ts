@@ -146,20 +146,26 @@ export const useLoanApplicationStore = defineStore('loanApplication', {
       if (dailyPayment === null) return null;
       return dailyPayment * 30;
     },
+    getPhoneLoanDetails: (state) => (phone: Phone) => {
+      const risk = state.riskProfile;
+      if (!phone || !risk) return null;
+
+      const loanPrincipal = phone.cash_price * (1 - risk.deposit);
+      const totalLoanAmount = loanPrincipal * (1 + risk.interest);
+      const dailyPayment = totalLoanAmount / 360;
+      const monthlyPrice = dailyPayment * 30;
+
+      return { loanPrincipal, totalLoanAmount, dailyPayment, monthlyPrice };
+    },
     affordablePhones(): Phone[] {
       if (!this.monthly_income || this.monthly_income <= 0) return [];
       const affordabilityThreshold = this.monthly_income / 10;
 
       return this.availablePhones.filter(phone => {
-        const tempRisk = this.riskProfile;
-        if (!tempRisk) return false;
+        const phoneDetails = this.getPhoneLoanDetails(phone);
+        if (!phoneDetails) return false;
 
-        const tempLoanPrincipal = phone.cash_price * (1 - tempRisk.deposit);
-        const tempTotalLoanAmount = tempLoanPrincipal * (1 + tempRisk.interest);
-        const tempDailyPayment = tempTotalLoanAmount / 360;
-        const tempMonthlyPrice = tempDailyPayment * 30;
-
-        return this.monthly_income > (10 * tempMonthlyPrice);
+        return this.monthly_income > (10 * phoneDetails.monthlyPrice);
       });
     }
   },

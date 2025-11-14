@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { useLoanApplicationStore } from '~/stores/loanApplication';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { CheckCircle, Flower2 } from 'lucide-vue-next';
 
 const store = useLoanApplicationStore();
 
 const resetFormAndStartOver = () => {
   store.resetForm();
+  store.currentStep = 1; // Ensure step is reset to 1
 };
 </script>
 
 <template>
-  <Card class="w-full max-w-md mx-auto text-center">
-    <CardHeader>
-      <CardTitle>Thank You!</CardTitle>
-      <CardDescription>Your loan application has been successfully submitted.</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <p class="mb-4">We appreciate you taking the time to fill out the form. We will review your application shortly.</p>
-      <p class="mb-6">You can review your application details in the previous step if needed.</p>
-      <Button @click="resetFormAndStartOver">
-        Start a New Application
-      </Button>
-    </CardContent>
-  </Card>
+  <div>
+    <div class="text-center space-y-4 p-6">
+      <div class="flex justify-center">
+        <CheckCircle class="w-20 h-20 text-yellow-300" />
+      </div>
+      <h2 class="text-3xl font-semibold text-gray-800">Application Submitted!</h2>
+      <p class="text-muted-foreground">
+        Your loan application has been successfully submitted.
+      </p>
+    </div>
+  </div>
 </template>

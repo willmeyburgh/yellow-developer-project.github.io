@@ -3,22 +3,22 @@ import { ref, watch, computed } from 'vue';
 import { useLoanApplicationStore } from '~/stores/loanApplication';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Upload, AlertCircle } from 'lucide-vue-next';
 
 const store = useLoanApplicationStore();
 
 const monthlyIncome = ref(store.monthly_income);
-const proofDocument = ref<File | null>(null); // To hold the selected file object
-const proofDocumentName = ref(store.proof_document_name); // To display the file name
+const proofDocumentName = ref(store.proof_document_name);
 
-// Validation states
 const monthlyIncomeError = ref('');
 const proofDocumentError = ref('');
 
 watch(monthlyIncome, (newValue) => {
   store.monthly_income = newValue;
   if (newValue === null || newValue <= 0) {
-    monthlyIncomeError.value = 'Monthly Income must be a positive value.';
+    monthlyIncomeError.value = 'Monthly income must be a positive number';
   } else {
     monthlyIncomeError.value = '';
   }
@@ -27,26 +27,22 @@ watch(monthlyIncome, (newValue) => {
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    proofDocument.value = target.files[0];
     proofDocumentName.value = target.files[0].name;
     store.setProofDocumentName(target.files[0].name);
     proofDocumentError.value = '';
   } else {
-    proofDocument.value = null;
     proofDocumentName.value = null;
     store.setProofDocumentName('');
-    proofDocumentError.value = 'Proof Document is required.';
+    proofDocumentError.value = 'Please upload a proof document';
   }
 };
 
-// Update local refs if store values change (e.g., on form reset)
 watch(() => store.monthly_income, (newValue) => {
   monthlyIncome.value = newValue;
 });
 watch(() => store.proof_document_name, (newValue) => {
   proofDocumentName.value = newValue;
 });
-
 
 const isStepValid = computed(() => {
   return monthlyIncome.value !== null &&
@@ -55,32 +51,45 @@ const isStepValid = computed(() => {
          proofDocumentName.value !== '';
 });
 
-// Expose validation status for parent component
 defineExpose({
   isStepValid,
 });
 </script>
 
 <template>
-  <Card class="w-full max-w-md mx-auto">
-    <CardHeader>
-      <CardTitle>Income Details</CardTitle>
-      <CardDescription>Please provide your monthly income and proof of income.</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div class="grid gap-4">
-        <div class="grid gap-2">
-          <Label for="monthlyIncome">Monthly Income (ZAR)</Label>
-          <Input id="monthlyIncome" v-model.number="monthlyIncome" type="number" placeholder="e.g., 15000" />
-          <p v-if="monthlyIncomeError" class="text-red-500 text-sm">{{ monthlyIncomeError }}</p>
-        </div>
-        <div class="grid gap-2">
-          <Label for="proofDocument">Proof Document</Label>
-          <Input id="proofDocument" type="file" @change="handleFileUpload" accept=".pdf,.jpg,.png" />
-          <p v-if="proofDocumentName">Selected: {{ proofDocumentName }}</p>
-          <p v-if="proofDocumentError" class="text-red-500 text-sm">{{ proofDocumentError }}</p>
-        </div>
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <Label htmlFor="monthly_income">Monthly Income (ZAR) *</Label>
+      <Input
+        id="monthly_income"
+        v-model.number="monthlyIncome"
+        type="number"
+        placeholder="Enter your monthly income"
+        class="border-yellow-200 focus:border-yellow-200"
+      />
+      <Alert v-if="monthlyIncomeError" variant="destructive" class="py-2">
+        <AlertCircle class="h-4 w-4" />
+        <AlertDescription>{{ monthlyIncomeError }}</AlertDescription>
+      </Alert>
+    </div>
+
+    <div class="space-y-2">
+      <Label htmlFor="proof_document">Proof of Income Document *</Label>
+      <div class="flex items-center gap-2">
+        <Input
+          id="proof_document"
+          type="file"
+          @change="handleFileUpload"
+          accept=".pdf,.jpg,.jpeg,.png"
+          class="border-yellow-200 focus:border-yellow-200"
+        />
+        <Upload class="w-5 h-5 text-yellow-300" />
       </div>
-    </CardContent>
-  </Card>
+      <Badge v-if="proofDocumentName" class="bg-green-600">Uploaded: {{ proofDocumentName }}</Badge>
+      <Alert v-if="proofDocumentError" variant="destructive" class="py-2">
+        <AlertCircle class="h-4 w-4" />
+        <AlertDescription>{{ proofDocumentError }}</AlertDescription>
+      </Alert>
+    </div>
+  </div>
 </template>
