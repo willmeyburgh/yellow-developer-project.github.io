@@ -26,28 +26,25 @@ watch(fullName, (newValue) => {
 });
 
 watch(saIdNumber, async (newValue) => {
-  store.sa_id_number = newValue;
+  await store.setPersonalInformation(fullName.value, newValue); // Await the async call
+
+  
+  
+  
+  
+
   if (newValue.length !== 13 || !/^\d+$/.test(newValue)) {
     saIdError.value = 'SA ID Number must be 13 digits';
-    store.birthday = null;
-    store.existingApplicationId = null;
+    ageError.value = '';
+  } else if (!store.isSaIdValid) {
+    saIdError.value = 'Invalid SA ID Number';
+    ageError.value = '';
+  } else if (!store.isAgeValid) {
+    saIdError.value = '';
+    ageError.value = 'Age not between 18-65';
   } else {
-    if (!store.isSaIdValid) {
-      saIdError.value = 'Invalid SA ID Number or age not between 18-65';
-      ageError.value = '';
-      store.birthday = null;
-      store.existingApplicationId = null;
-    } else {
-      saIdError.value = '';
-      store.setPersonalInformation(fullName.value, newValue);
-
-      if (!store.isAgeValid) {
-        ageError.value = 'Invalid SA ID Number or age not between 18-65';
-      } else {
-        ageError.value = '';
-      }
-      await store.checkExistingApplication(newValue);
-    }
+    saIdError.value = '';
+    ageError.value = '';
   }
 });
 
@@ -59,11 +56,19 @@ watch(() => store.sa_id_number, (newValue) => {
 });
 
 const isStepValid = computed(() => {
-  return fullName.value.length >= 3 &&
+  const valid = fullName.value.length >= 3 &&
          saIdNumber.value.length === 13 &&
          /^\d+$/.test(saIdNumber.value) &&
          store.isSaIdValid &&
          store.isAgeValid;
+  
+  
+  
+  
+  
+  
+  
+  return valid;
 });
 
 defineExpose({

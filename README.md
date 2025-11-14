@@ -1,75 +1,62 @@
-# Nuxt Minimal Starter
+# Yellow Developer Project: Loan Application Portal
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## 🌟 Project Overview
 
-## Setup
+This is a modern, responsive **Loan Application Portal** built using **Nuxt 3** for a robust, server-side rendered application. State management for the multi-step sign-up process is handled by **Pinia**. The UI uses **Tailwind CSS** and **shadcn-vue** components for a professional look, and all data persistence and authentication are managed via **Supabase** (PostgreSQL).
 
-Make sure to install dependencies:
+## 🚀 Tech Stack
 
-```bash
-# npm
-npm install
+| Technology | Purpose | Notes | 
+ | ----- | ----- | ----- | 
+| **Vue 3** | Frontend UI Framework | Composition API for logic. | 
+| **Nuxt 3** | Full-Stack Framework | Routing and SSR. | 
+| **Pinia** | State Management | Type-safe and modular store setup. | 
+| **Tailwind CSS** | Styling | Utility-first design. | 
+| **shadcn-vue** | UI Components | Accessible, customizable components. | 
+| **Supabase** | Backend/Database | PostgreSQL, Auth, and APIs. | 
 
-# pnpm
-pnpm install
+## 🛠️ Prerequisites
 
-# yarn
-yarn install
+Before starting, ensure you have the following installed:
 
-# bun
-bun install
-```
+* **Node.js (v18+)**
 
-## Development Server
+* **pnpm** (The package manager used for this project)
 
-Start the development server on `http://localhost:3000`:
+* A **Supabase** account and project set up.
 
-```bash
-# npm
-npm run dev
+## ⚙️ Local Setup
 
-# pnpm
-pnpm dev
+### 1. Installation
 
-# yarn
-yarn dev
+Clone the repository and install dependencies using **pnpm**:
 
-# bun
-bun run dev
-```
+```git clone [YOUR_REPO_URL] cd [PROJECT_NAME] pnpm install```
 
-## Production
+### 2. Database Migration
 
-Build the application for production:
+The project relies on a specific PostgreSQL schema. You must run the provided migration script against your Supabase database before starting.
 
-```bash
-# npm
-npm run build
+1. Navigate to your Supabase SQL Editor.
 
-# pnpm
-pnpm build
+2. Open the file: `supabase/migrations/20251114124554_create_loan_tables.sql`
 
-# yarn
-yarn build
+3. Copy and run the entire SQL content to create the necessary tables.
 
-# bun
-bun run build
-```
+## 🔑 Key Project Files
 
-Locally preview production build:
+The following files are essential to the application's core logic:
 
-```bash
-# npm
-npm run preview
+* **`components/signup/SignUpForm.vue`**: The main parent component orchestrating the multi-step sign-up and loan application flow.
 
-# pnpm
-pnpm preview
+* **`stores/loanApplication.ts`**: The Pinia store holding all application state, business logic, and managing interactions with the PostgreSQL backend (via Supabase).
 
-# yarn
-yarn preview
+* **`supabase/migrations/20251114124554_create_loan_tables.sql`**: The PostgreSQL schema definition required to structure the database for loan application data.
 
-# bun
-bun run preview
-```
+## 🏃 Getting Started
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+To run the development server:
+
+```pnpm dev```
+
+The application will be available at `http://localhost:3000`.

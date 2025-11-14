@@ -44,14 +44,20 @@ const currentStepComponent = computed(() => {
 });
 
 const isCurrentStepValid = computed(() => {
+  let valid = false;
   switch (store.currentStep) {
-    case 1: return personalInfoRef.value?.isStepValid ?? false;
-    case 2: return incomeDetailsRef.value?.isStepValid ?? false;
-    case 3: return phoneSelectionRef.value?.isStepValid ?? false;
-    case 4: return reviewAndSubmitRef.value?.isStepValid ?? false;
-    case 5: return true; // ThankYou page is always valid to display
-    default: return false;
+    case 1: valid = personalInfoRef.value?.isStepValid ?? false; break;
+    case 2: valid = incomeDetailsRef.value?.isStepValid ?? false; break;
+    case 3: valid = phoneSelectionRef.value?.isStepValid ?? false; break;
+    case 4: valid = reviewAndSubmitRef.value?.isStepValid ?? false; break;
+    case 5: valid = true; break; // ThankYou page is always valid to display
+    default: valid = false;
   }
+  
+  
+  
+  
+  return valid;
 });
 
 const progressValue = computed(() => {
@@ -80,8 +86,9 @@ const resetApplication = () => {
   store.currentStep = 1; // Ensure step is reset to 1
 };
 
-onMounted(() => {
-  store.fetchPhoneModels();
+const { data: phones, pending, error } = useAsyncData('phoneModels', async () => {
+  await store.fetchPhoneModels();
+  return store.availablePhones;
 });
 </script>
 

@@ -185,6 +185,7 @@ export const useLoanApplicationStore = defineStore('loanApplication', {
     },
     async checkExistingApplication(saIdNumber: string) {
       const supabase = useSupabaseClient();
+      
       const { data, error } = await supabase
         .from('loan_applications')
         .select('id')
@@ -192,25 +193,42 @@ export const useLoanApplicationStore = defineStore('loanApplication', {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error('Error checking existing application:', error);
+        console.error('loanApplication: Error checking existing application:', error);
         this.existingApplicationId = null;
       } else if (data) {
         this.existingApplicationId = data.id;
+        
       } else {
         this.existingApplicationId = null;
+        
       }
     },
-    setPersonalInformation(fullName: string, saIdNumber: string) {
+    async setPersonalInformation(fullName: string, saIdNumber: string) {
       this.full_name = fullName;
       this.sa_id_number = saIdNumber;
+
       const { birthDate } = extractSaIdInfo(saIdNumber);
       this.birthday = birthDate;
-      // Check for existing application when SA ID is set
-      if (this.isSaIdValid) {
-        this.checkExistingApplication(saIdNumber);
+
+      
+      
+      
+      
+      
+      
+
+      // Only check for existing application if the SA ID is potentially valid
+      if (this.sa_id_number.length === 13 && /^\d+$/.test(this.sa_id_number)) {
+        if (this.isSaIdValid && this.isAgeValid) {
+          await this.checkExistingApplication(saIdNumber); // Await the async call
+        } else {
+          this.existingApplicationId = null;
+        }
       } else {
         this.existingApplicationId = null;
       }
+      
+      
     },
     setMonthlyIncome(income: number) {
       this.monthly_income = income;
@@ -266,7 +284,7 @@ export const useLoanApplicationStore = defineStore('loanApplication', {
         console.error('Error submitting application:', error);
         this.status = 'ERROR';
       } else {
-        console.log('Application submitted successfully:', data);
+        
         this.status = 'SUBMITTED';
         this.existingApplicationId = null; // Clear existing ID after successful submission/override
       }
